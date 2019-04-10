@@ -22,7 +22,7 @@ import (
 	"github.com/golang/glog"
 
 	"github.com/kubernetes-incubator/metrics-server/pkg/provider"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -93,7 +93,7 @@ func (m *MetricStorage) List(ctx context.Context, options *metainternalversion.L
 		names[i] = node.Name
 	}
 
-	metricsItems, err := m.getNodeMetrics(names...)
+	metricsItems, err := m.getNodeMetrics(ctx, names...)
 	if err != nil {
 		errMsg := fmt.Errorf("Error while fetching node metrics for selector %v: %v", labelSelector, err)
 		glog.Error(errMsg)
@@ -104,7 +104,7 @@ func (m *MetricStorage) List(ctx context.Context, options *metainternalversion.L
 }
 
 func (m *MetricStorage) Get(ctx context.Context, name string, opts *metav1.GetOptions) (runtime.Object, error) {
-	nodeMetrics, err := m.getNodeMetrics(name)
+	nodeMetrics, err := m.getNodeMetrics(ctx, name)
 	if err == nil && len(nodeMetrics) == 0 {
 		err = fmt.Errorf("no metrics known for node %q", name)
 	}
@@ -116,8 +116,8 @@ func (m *MetricStorage) Get(ctx context.Context, name string, opts *metav1.GetOp
 	return &nodeMetrics[0], nil
 }
 
-func (m *MetricStorage) getNodeMetrics(names ...string) ([]metrics.NodeMetrics, error) {
-	timestamps, usages, err := m.prov.GetNodeMetrics(names...)
+func (m *MetricStorage) getNodeMetrics(ctx context.Context, names ...string) ([]metrics.NodeMetrics, error) {
+	timestamps, usages, err := m.prov.GetNodeMetrics(ctx, names...)
 	if err != nil {
 		return nil, err
 	}

@@ -17,6 +17,7 @@ limitations under the License.
 package resourceprovider
 
 import (
+	"context"
 	"time"
 
 	"github.com/kubernetes-incubator/metrics-server/pkg/provider"
@@ -145,7 +146,7 @@ var _ = Describe("Resource Metrics Provider", func() {
 		}
 
 		By("querying for metrics for some pods")
-		times, metricVals, err := prov.GetContainerMetrics(pods...)
+		times, metricVals, err := prov.GetContainerMetrics(context.TODO(), pods...)
 		Expect(err).NotTo(HaveOccurred())
 
 		By("verifying that the reported times for each are the earliest times for each pod")
@@ -184,7 +185,7 @@ var _ = Describe("Resource Metrics Provider", func() {
 		}
 
 		By("querying for metrics for some pods, one of which is missing")
-		times, metricVals, err := prov.GetContainerMetrics(
+		times, metricVals, err := prov.GetContainerMetrics(context.TODO(),
 			types.NamespacedName{Namespace: "some-ns", Name: "pod1"},
 			types.NamespacedName{Namespace: "some-ns", Name: "pod-nonexistant"},
 		)
@@ -215,7 +216,7 @@ var _ = Describe("Resource Metrics Provider", func() {
 			),
 		}
 		By("querying for metrics for some nodes")
-		times, metricVals, err := prov.GetNodeMetrics("node1", "node2")
+		times, metricVals, err := prov.GetNodeMetrics(context.TODO(), "node1", "node2")
 		Expect(err).NotTo(HaveOccurred())
 
 		By("verifying that the reported times for each are the earliest times for each pod")
@@ -243,7 +244,7 @@ var _ = Describe("Resource Metrics Provider", func() {
 			),
 		}
 		By("querying for metrics for some nodes, one of which is missing")
-		times, metricVals, err := prov.GetNodeMetrics("node1", "node2", "node3")
+		times, metricVals, err := prov.GetNodeMetrics(context.TODO(), "node1", "node2", "node3")
 		Expect(err).NotTo(HaveOccurred())
 
 		By("verifying that the missing pod had nil metrics")

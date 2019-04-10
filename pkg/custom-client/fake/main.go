@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"gitlab.alipay-inc.com/ant_agent/metrics-apiserver/pkg/client"
+	client "github.com/directxman12/k8s-prometheus-adapter/pkg/custom-client"
 )
 
 func main() {
@@ -31,10 +31,10 @@ func dataQueryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respBody := client.APIResponse{
-		Data: &client.APIResponseData{
-			Data: &client.APIResponseData2{
+		Data: client.APIResponseData{
+			Data: client.APIResponseData2{
 				IsSuccessed: true,
-				Metrics: []*client.Metric{
+				Metrics: []client.Metric{
 					{
 						Name: "my-metric",
 						Labels: map[string]string{

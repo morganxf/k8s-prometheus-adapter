@@ -119,7 +119,7 @@ type nsQueryResults struct {
 }
 
 // GetContainerMetrics implements the provider.MetricsProvider interface. It may return nil, nil, nil.
-func (p *resourceProvider) GetContainerMetrics(pods ...apitypes.NamespacedName) ([]provider.TimeInfo, [][]metrics.ContainerMetrics, error) {
+func (p *resourceProvider) GetContainerMetrics(ctx context.Context, pods ...apitypes.NamespacedName) ([]provider.TimeInfo, [][]metrics.ContainerMetrics, error) {
 	if len(pods) == 0 {
 		return nil, nil, nil
 	}
@@ -240,7 +240,7 @@ func (p *resourceProvider) assignForPod(pod apitypes.NamespacedName, resultsByNs
 }
 
 // GetNodeMetrics implements the provider.MetricsProvider interface. It may return nil, nil, nil.
-func (p *resourceProvider) GetNodeMetrics(nodes ...string) ([]provider.TimeInfo, []corev1.ResourceList, error) {
+func (p *resourceProvider) GetNodeMetrics(ctx context.Context, nodes ...string) ([]provider.TimeInfo, []corev1.ResourceList, error) {
 	if len(nodes) == 0 {
 		return nil, nil, nil
 	}
