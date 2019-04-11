@@ -21,13 +21,15 @@ import (
 )
 
 // NewProvider constructs a new MetricsProvider to provide resource metrics from MonitorServer.
-func NewProvider(c client.Client, mapper apimeta.RESTMapper) (provider.MetricsProvider, error) {
+func NewProvider(c client.Client, kubeClient kubernetes.Interface, mapper apimeta.RESTMapper) (provider.MetricsProvider, error) {
 	cpuQuery := newResourceQuery("cpu_util")
 	memQuery := newResourceQuery("mem_util")
 	return &resourceProvider{
 		client: c,
 		cpu:    cpuQuery,
 		mem:    memQuery,
+
+		kubeClient: kubeClient,
 	}, nil
 }
 
