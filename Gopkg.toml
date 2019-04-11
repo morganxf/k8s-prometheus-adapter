@@ -49,7 +49,8 @@
 # Kubernetes incubator deps
 [[constraint]]
   name = "github.com/kubernetes-incubator/custom-metrics-apiserver"
-  version = "kubernetes-1.11.2"
+  # version = "kubernetes-1.11.2"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/kubernetes-incubator/metrics-server"
@@ -58,25 +59,52 @@
   source = "github.com/morganxf/metrics-server"
 
 # Core Kubernetes deps
-[[constraint]]
+[[override]]
   name = "k8s.io/api"
-  branch = "release-1.11"
+  # branch = "release-1.11"
+  branch = "release-1.12"
 
-[[constraint]]
+[[override]]
   name = "k8s.io/apimachinery"
-  branch = "release-1.11"
+  # branch = "release-1.11"
+  branch = "release-1.12"
 
-[[constraint]]
+[[override]]
   name = "k8s.io/apiserver"
-  branch = "release-1.11"
+  # branch = "release-1.11"
+  branch = "release-1.12"
+  # branch = "master"
+  # source = "git@gitlab.alipay-inc.com:antcloud-aks/apiserver.git"
 
-[[constraint]]
+[[override]]
   name = "k8s.io/client-go"
-  branch = "release-8.0"
+  # branch = "release-8.0"
+  branch = "release-9.0"
+  # branch = "master"
+  # source = "git@gitlab.alipay-inc.com:antcloud-aks/client-go.git"
 
-[[constraint]]
+[[override]]
   name = "k8s.io/metrics"
-  branch = "release-1.11"
+  # branch = "release-1.11"
+  branch = "release-1.12"
+
+# for k8s.io/apiserver@release-1.12
+[[override]]
+  name = "k8s.io/kube-openapi"
+  revision = "0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803"
+
+# for k8s.io/apiserver@release-1.12
+[[override]]
+  name = "github.com/evanphx/json-patch"
+  revision = "5858425f75500d40c52783dce87d085a483ce135"
+
+[[override]]
+  name = "github.com/coreos/etcd"
+  revision = "420a452267a7ce45b3fcbed04d54030d69964fc1"
+
+[[override]]
+  name = "github.com/ugorji/go"
+  revision = "ded73eae5db7e7a0ef6f55aace87a2873c5d2b74"
 
 # messed up kubernetes dep
 [[override]]
