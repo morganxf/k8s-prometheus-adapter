@@ -82,3 +82,15 @@ gofmt:
 	./hack/gofmt-all.sh
 
 verify: verify-gofmt test
+
+.PHONY: docker-build-push
+docker-build-push:
+	bash ./scripts/docker-build.sh push
+
+.PHONY: docker-build-builder
+docker-build-builder:
+	bash ./scripts/docker-build.sh builder
+
+.PHONY: docker-build-builder-push
+docker-build-builder-push:
+	bash ./scripts/docker-build.sh builder push

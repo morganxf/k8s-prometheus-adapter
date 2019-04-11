@@ -28,7 +28,7 @@ type Adapter struct {
 
 	// AdapterConfigFile points to the file containing the configuration.
 	AdapterConfigFile string
-	KubeconfigFile    string
+	KubeConfigFile    string
 
 	// MetricsRelistInterval is the interval at which to relist the set of available metrics
 	MetricsRelistInterval time.Duration
@@ -41,8 +41,8 @@ func (cmd *Adapter) addFlags() {
 		"URL for connecting to MonitorServer.")
 	cmd.Flags().StringVar(&cmd.AdapterConfigFile, "config", "",
 		"Configuration file for metrics APIServer.")
-	cmd.Flags().StringVar(&cmd.KubeconfigFile, "kube-config", "",
-		"Configuration file for Kubernetes client.")
+	cmd.Flags().StringVar(&cmd.KubeConfigFile, "kube-config", "",
+		"The path to the kubeconfig used to connect to the Kubernetes API server and the Kubelets (defaults to in-cluster config)")
 	cmd.Flags().DurationVar(&cmd.MetricsRelistInterval, "metrics-relist-interval", 10*time.Minute,
 		"interval at which to re-list the set of all available metrics from MonitorServer")
 	cmd.Flags().DurationVar(&cmd.MetricsMaxAge, "metrics-max-age", 20*time.Minute,
@@ -50,6 +50,9 @@ func (cmd *Adapter) addFlags() {
 }
 
 func (cmd *Adapter) makeMonitorClient() (mclient.Client, error) {
+	if cmd.MonitorServerURL == "" {
+		cmd.MonitorServerURL = os.Getenv("MONITOR_SERVER_URL")
+	}
 	if cmd.MonitorServerURL == "" {
 		return nil, fmt.Errorf("invalid MonitorServer URL: empty url")
 	}
@@ -100,8 +103,12 @@ func (cmd *Adapter) makeKubeClient() (kubernetes.Interface, error) {
 	var err error
 	// set up the client config
 	var kubeConfig *rest.Config
-	if len(cmd.KubeconfigFile) > 0 {
-		loader := &clientcmd.ClientConfigLoadingRules{ExplicitPath: cmd.KubeconfigFile}
+
+	if len(cmd.KubeConfigFile) == 0 {
+		cmd.KubeConfigFile = os.Getenv("KUBE_CONFIG_FILE")
+	}
+	if len(cmd.KubeConfigFile) > 0 {
+		loader := &clientcmd.ClientConfigLoadingRules{ExplicitPath: cmd.KubeConfigFile}
 		clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loader, &clientcmd.ConfigOverrides{})
 		kubeConfig, err = clientConfig.ClientConfig()
 	} else {
