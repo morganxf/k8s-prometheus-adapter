@@ -20,7 +20,6 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -67,8 +66,6 @@ type RequestScope struct {
 	Subresource string
 
 	MetaGroupVersion schema.GroupVersion
-
-	MaxRequestBodyBytes int64
 }
 
 func (scope *RequestScope) err(err error, w http.ResponseWriter, req *http.Request) {
@@ -188,9 +185,9 @@ func finishRequest(timeout time.Duration, fn resultFunc) (result runtime.Object,
 				buf := make([]byte, size)
 				buf = buf[:goruntime.Stack(buf, false)]
 				panicReason = strings.TrimSuffix(fmt.Sprintf("%v\n%s", panicReason, string(buf)), "\n")
-				// Propagate to parent goroutine
-				panicCh <- panicReason
 			}
+			// Propagate to parent goroutine
+			panicCh <- panicReason
 		}()
 
 		if result, err := fn(); err != nil {
@@ -322,23 +319,9 @@ func summarizeData(data []byte, maxLength int) string {
 	}
 }
 
-func limitedReadBody(req *http.Request, limit int64) ([]byte, error) {
+func readBody(req *http.Request) ([]byte, error) {
 	defer req.Body.Close()
-	if limit <= 0 {
-		return ioutil.ReadAll(req.Body)
-	}
-	lr := &io.LimitedReader{
-		R: req.Body,
-		N: limit + 1,
-	}
-	data, err := ioutil.ReadAll(lr)
-	if err != nil {
-		return nil, err
-	}
-	if lr.N <= 0 {
-		return nil, errors.NewRequestEntityTooLargeError(fmt.Sprintf("limit is %d", limit))
-	}
-	return data, nil
+	return ioutil.ReadAll(req.Body)
 }
 
 func parseTimeout(str string) time.Duration {

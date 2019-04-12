@@ -65,6 +65,10 @@ type Config struct {
 	// GetAttrsFunc is used to get object labels, fields, and the uninitialized bool
 	GetAttrsFunc func(runtime.Object) (label labels.Set, field fields.Set, uninitialized bool, err error)
 
+	// Indexers is used to accelerate the list operations, go back to normal list
+	// operation if there are not indexes found.
+	Indexers *cache.Indexers
+
 	// TriggerPublisherFunc is used for optimizing amount of watchers that
 	// needs to process an incoming event.
 	TriggerPublisherFunc storage.TriggerPublisherFunc
@@ -192,7 +196,7 @@ type Cacher struct {
 // its internal cache and updating its cache in the background based on the
 // given configuration.
 func NewCacherFromConfig(config Config) *Cacher {
-	watchCache := newWatchCache(config.CacheCapacity, config.KeyFunc, config.GetAttrsFunc, config.Versioner)
+	watchCache := newWatchCache(config.CacheCapacity, config.KeyFunc, config.Indexers, config.GetAttrsFunc, config.Versioner)
 	listerWatcher := newCacherListerWatcher(config.Storage, config.ResourcePrefix, config.NewListFunc)
 	reflectorName := "storage/cacher.go:" + config.ResourcePrefix
 
@@ -335,13 +339,6 @@ func (c *Cacher) Watch(ctx context.Context, key string, resourceVersion string, 
 		chanSize = 1000
 	}
 
-	// With some events already sent, update resourceVersion so that
-	// events that were buffered and not yet processed won't be delivered
-	// to this watcher second time causing going back in time.
-	if len(initEvents) > 0 {
-		watchRV = initEvents[len(initEvents)-1].ResourceVersion
-	}
-
 	c.Lock()
 	defer c.Unlock()
 	forget := forgetWatcher(c, c.watcherIdx, triggerValue, triggerSupported)
@@ -411,15 +408,10 @@ func (c *Cacher) Get(ctx context.Context, key string, resourceVersion string, ob
 // GetToList implements storage.Interface.
 func (c *Cacher) GetToList(ctx context.Context, key string, resourceVersion string, pred storage.SelectionPredicate, listObj runtime.Object) error {
 	pagingEnabled := utilfeature.DefaultFeatureGate.Enabled(features.APIListChunking)
-	hasContinuation := pagingEnabled && len(pred.Continue) > 0
-	hasLimit := pagingEnabled && pred.Limit > 0 && resourceVersion != "0"
-	if resourceVersion == "" || hasContinuation || hasLimit {
+	if resourceVersion == "" || (pagingEnabled && (len(pred.Continue) > 0 || pred.Limit > 0)) {
 		// If resourceVersion is not specified, serve it from underlying
-		// storage (for backward compatibility). If a continuation is
+		// storage (for backward compatibility). If a continuation or limit is
 		// requested, serve it from the underlying storage as well.
-		// Limits are only sent to storage when resourceVersion is non-zero
-		// since the watch cache isn't able to perform continuations, and
-		// limits are ignored when resource version is zero
 		return c.storage.GetToList(ctx, key, resourceVersion, pred, listObj)
 	}
 
@@ -523,7 +515,7 @@ func (c *Cacher) List(ctx context.Context, key string, resourceVersion string, p
 	}
 	filter := filterWithAttrsFunction(key, pred)
 
-	objs, readResourceVersion, err := c.watchCache.WaitUntilFreshAndList(listRV, trace)
+	objs, readResourceVersion, err := c.watchCache.WaitUntilFreshAndListWithIndex(listRV, pred.MatcherIndex(), trace)
 	if err != nil {
 		return err
 	}

@@ -70,7 +70,7 @@ func (cmd *Adapter) makeMonitorClient() (mclient.Client, error) {
 func (cmd *Adapter) addResourceMetricsAPI(mClient mclient.Client, kubeClient kubernetes.Interface) error {
 	mapper, err := cmd.RESTMapper()
 	if err != nil {
-		return err
+		return fmt.Errorf("cmd.RESTMapper - %v", err)
 	}
 
 	provider, err := resprov.NewProvider(mClient, kubeClient, mapper)
@@ -84,16 +84,16 @@ func (cmd *Adapter) addResourceMetricsAPI(mClient mclient.Client, kubeClient kub
 	}
 	informers, err := cmd.Informers()
 	if err != nil {
-		return err
+		return fmt.Errorf("cmd.Informers - %v", err)
 	}
 
 	server, err := cmd.Server()
 	if err != nil {
-		return err
+		return fmt.Errorf("cmd.Server - %v", err)
 	}
 
 	if err := resmetrics.InstallStorage(provCfg, informers.Core().V1(), server.GenericAPIServer); err != nil {
-		return err
+		return fmt.Errorf("resmetrics.InstallStorage - %v", err)
 	}
 
 	return nil

@@ -554,12 +554,12 @@
   revision = "ded73eae5db7e7a0ef6f55aace87a2873c5d2b74"
 
 [[projects]]
-  branch = "release-branch.go1.11"
-  digest = "1:3f3a05ae0b95893d90b9b3b5afdb79a9b3d96e4e36e099d841ae602e4aca0da8"
+  branch = "master"
+  digest = "1:bbe51412d9915d64ffaa96b51d409e070665efc5194fcf145c4a27d4133107a4"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = "UT"
-  revision = "56440b844dfe139a8ac053f4ecac0b20b79058f4"
+  revision = "88737f569e3a9c7ab309cdc09a07fe7fc87233c3"
 
 [[projects]]
   branch = "master"
@@ -595,14 +595,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c0b0b67bb6323f4f603950892199a243ee78bbb943605085b6f2dc72daa93bd1"
+  digest = "1:ae913c44e70b411817f8d4d352dc10e595d6b970ba23f2f1e668c95901f8a46a"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "0ad05ae3009d6413d3363aa09b350b2ec37daf09"
+  revision = "b44545bcd369ef9ff9bebcfebf5f3370ef9b1932"
 
 [[projects]]
   digest = "1:bb8277a2ca2bcad6ff7f413b939375924099be908cedd1314baa21ecd08df477"
@@ -800,8 +800,8 @@
   revision = "6db15a15d2d3874a6c3ddb2140ac9f3bc7058428"
 
 [[projects]]
-  branch = "release-1.12"
-  digest = "1:254d6bb21f8b25fccfe3d5b6a199409828e81cd02d70b3e440e1cb4f56da372e"
+  branch = "master"
+  digest = "1:5d386da1f9d80bcaef9dd1eec611f83104f145b48e5ccd8139e1ba51f83b7ed9"
   name = "k8s.io/apimachinery"
   packages = [
     "pkg/api/equality",
@@ -855,11 +855,12 @@
     "third_party/forked/golang/reflect",
   ]
   pruneopts = "UT"
-  revision = "01f179d85dbce0f2e0e4351a92394b38694b7cae"
+  revision = "921f27df3f717e1a51fffad30e0db797d7cced99"
+  source = "git@gitlab.alipay-inc.com:antcloud-aks/apimachinery.git"
 
 [[projects]]
-  branch = "release-1.12"
-  digest = "1:8d322a5dc937922bfe3266a1b267006c8931be6eac96c95611c00fdbde429398"
+  branch = "master"
+  digest = "1:69a30da7c6319b0dc78367b130486efa02327f58e48a6089d48d32cc4157cd16"
   name = "k8s.io/apiserver"
   packages = [
     "pkg/admission",
@@ -936,6 +937,7 @@
     "pkg/storage/etcd/metrics",
     "pkg/storage/etcd/util",
     "pkg/storage/etcd3",
+    "pkg/storage/etcd3/metrics",
     "pkg/storage/names",
     "pkg/storage/storagebackend",
     "pkg/storage/storagebackend/factory",
@@ -957,11 +959,12 @@
     "plugin/pkg/authorizer/webhook",
   ]
   pruneopts = "UT"
-  revision = "5e1c1f41ee34b3bb153f928f8c91c2a6dd9482a9"
+  revision = "bb77805055ccf89c27af382797de4c13159dfc0a"
+  source = "git@gitlab.alipay-inc.com:antcloud-aks/apiserver.git"
 
 [[projects]]
-  branch = "release-9.0"
-  digest = "1:ab6142bb874eb42e99b6c659a4d90252f400fb9c39ec6a4147e91b6194f51bed"
+  branch = "master"
+  digest = "1:0dcf66afc599d2310230eb0cb781de181ffa32980045ec7f58f444c8eed02a57"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
@@ -1099,7 +1102,8 @@
     "util/retry",
   ]
   pruneopts = "UT"
-  revision = "77e032213d34c856222b4d4647c1c175ba8d22b9"
+  revision = "28f511e683dd552f2b7d544399f8c96a1110306a"
+  source = "git@gitlab.alipay-inc.com:antcloud-aks/client-go.git"
 
 [[projects]]
   digest = "1:a8a0fdd623b2a37c433d137bddfab6b155e988efbc7cd68c18f9923dce6c8742"

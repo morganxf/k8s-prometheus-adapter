@@ -25,6 +25,8 @@
 #   unused-packages = true
 
 
+ignored = ["gitlab.alipay-inc.com/antcloud-aks/aks-k8s-api*"]
+
 # Utility library deps
 [[constraint]]
   branch = "master"
@@ -67,21 +69,23 @@
 [[override]]
   name = "k8s.io/apimachinery"
   # branch = "release-1.11"
-  branch = "release-1.12"
+  # branch = "release-1.12"
+  branch = "master"
+  source = "git@gitlab.alipay-inc.com:antcloud-aks/apimachinery.git"
 
 [[override]]
   name = "k8s.io/apiserver"
   # branch = "release-1.11"
-  branch = "release-1.12"
-  # branch = "master"
-  # source = "git@gitlab.alipay-inc.com:antcloud-aks/apiserver.git"
+  # branch = "release-1.12"
+  branch = "master"
+  source = "git@gitlab.alipay-inc.com:antcloud-aks/apiserver.git"
 
 [[override]]
   name = "k8s.io/client-go"
   # branch = "release-8.0"
-  branch = "release-9.0"
-  # branch = "master"
-  # source = "git@gitlab.alipay-inc.com:antcloud-aks/client-go.git"
+  # branch = "release-9.0"
+  branch = "master"
+  source = "git@gitlab.alipay-inc.com:antcloud-aks/client-go.git"
 
 [[override]]
   name = "k8s.io/metrics"
@@ -89,11 +93,14 @@
   branch = "release-1.12"
 
 # for k8s.io/apiserver@release-1.12
+# [[constraint]]
+#   name = "gitlab.alipay-inc.com/antcloud-aks/aks-k8s-api"
+#   branch = "master"
+
 [[override]]
   name = "k8s.io/kube-openapi"
   revision = "0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803"
 
-# for k8s.io/apiserver@release-1.12
 [[override]]
   name = "github.com/evanphx/json-patch"
   revision = "5858425f75500d40c52783dce87d085a483ce135"

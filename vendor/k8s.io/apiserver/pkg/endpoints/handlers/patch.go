@@ -93,7 +93,7 @@ func PatchResource(r rest.Patcher, scope RequestScope, admit admission.Interface
 		ctx := req.Context()
 		ctx = request.WithNamespace(ctx, namespace)
 
-		patchJS, err := limitedReadBody(req, scope.MaxRequestBodyBytes)
+		patchJS, err := readBody(req)
 		if err != nil {
 			scope.err(err, w, req)
 			return

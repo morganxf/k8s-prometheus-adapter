@@ -40,17 +40,10 @@ type ServerRunOptions struct {
 	ExternalHost                string
 	MaxRequestsInFlight         int
 	MaxMutatingRequestsInFlight int
+	MaxWatchRequestsInFlight    int
 	RequestTimeout              time.Duration
 	MinRequestTimeout           int
-	// We intentionally did not add a flag for this option. Users of the
-	// apiserver library can wire it to a flag.
-	JSONPatchMaxCopyBytes int64
-	// The limit on the request body size that would be accepted and
-	// decoded in a write request. 0 means no limit.
-	// We intentionally did not add a flag for this option. Users of the
-	// apiserver library can wire it to a flag.
-	MaxRequestBodyBytes int64
-	TargetRAMMB         int
+	TargetRAMMB                 int
 }
 
 func NewServerRunOptions() *ServerRunOptions {
@@ -58,10 +51,9 @@ func NewServerRunOptions() *ServerRunOptions {
 	return &ServerRunOptions{
 		MaxRequestsInFlight:         defaults.MaxRequestsInFlight,
 		MaxMutatingRequestsInFlight: defaults.MaxMutatingRequestsInFlight,
+		MaxWatchRequestsInFlight:    defaults.MaxWatchRequestsInFlight,
 		RequestTimeout:              defaults.RequestTimeout,
 		MinRequestTimeout:           defaults.MinRequestTimeout,
-		JSONPatchMaxCopyBytes:       defaults.JSONPatchMaxCopyBytes,
-		MaxRequestBodyBytes:         defaults.MaxRequestBodyBytes,
 	}
 }
 
@@ -71,10 +63,9 @@ func (s *ServerRunOptions) ApplyTo(c *server.Config) error {
 	c.ExternalAddress = s.ExternalHost
 	c.MaxRequestsInFlight = s.MaxRequestsInFlight
 	c.MaxMutatingRequestsInFlight = s.MaxMutatingRequestsInFlight
+	c.MaxWatchRequestsInFlight = s.MaxWatchRequestsInFlight
 	c.RequestTimeout = s.RequestTimeout
 	c.MinRequestTimeout = s.MinRequestTimeout
-	c.JSONPatchMaxCopyBytes = s.JSONPatchMaxCopyBytes
-	c.MaxRequestBodyBytes = s.MaxRequestBodyBytes
 	c.PublicAddress = s.AdvertiseAddress
 
 	return nil
@@ -111,6 +102,10 @@ func (s *ServerRunOptions) Validate() []error {
 		errors = append(errors, fmt.Errorf("--max-mutating-requests-inflight can not be negative value"))
 	}
 
+	if s.MaxWatchRequestsInFlight < 0 {
+		errors = append(errors, fmt.Errorf("--max-watch-requests-inflight can not be negative value"))
+	}
+
 	if s.RequestTimeout.Nanoseconds() < 0 {
 		errors = append(errors, fmt.Errorf("--request-timeout can not be negative value"))
 	}
@@ -119,18 +114,10 @@ func (s *ServerRunOptions) Validate() []error {
 		errors = append(errors, fmt.Errorf("--min-request-timeout can not be negative value"))
 	}
 
-	if s.JSONPatchMaxCopyBytes < 0 {
-		errors = append(errors, fmt.Errorf("--json-patch-max-copy-bytes can not be negative value"))
-	}
-
-	if s.MaxRequestBodyBytes < 0 {
-		errors = append(errors, fmt.Errorf("--max-resource-write-bytes can not be negative value"))
-	}
-
 	return errors
 }
 
-// AddUniversalFlags adds flags for a specific APIServer to the specified FlagSet
+// AddFlags adds flags for a specific APIServer to the specified FlagSet
 func (s *ServerRunOptions) AddUniversalFlags(fs *pflag.FlagSet) {
 	// Note: the weird ""+ in below lines seems to be the only way to get gofmt to
 	// arrange these text blocks sensibly. Grrr.
@@ -161,6 +148,10 @@ func (s *ServerRunOptions) AddUniversalFlags(fs *pflag.FlagSet) {
 
 	fs.IntVar(&s.MaxMutatingRequestsInFlight, "max-mutating-requests-inflight", s.MaxMutatingRequestsInFlight, ""+
 		"The maximum number of mutating requests in flight at a given time. When the server exceeds this, "+
+		"it rejects requests. Zero for no limit.")
+
+	fs.IntVar(&s.MaxWatchRequestsInFlight, "max-watch-requests-inflight", s.MaxWatchRequestsInFlight, ""+
+		"The maximum number of watch requests in flight at a given time. When the server exceeds this, "+
 		"it rejects requests. Zero for no limit.")
 
 	fs.DurationVar(&s.RequestTimeout, "request-timeout", s.RequestTimeout, ""+

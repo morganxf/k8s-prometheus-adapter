@@ -18,6 +18,8 @@ import (
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/metrics/pkg/apis/metrics"
+
+	tenantmeta "gitlab.alipay-inc.com/antcloud-aks/aks-k8s-api/pkg/multitenancy/meta"
 )
 
 // NewProvider constructs a new MetricsProvider to provide resource metrics from MonitorServer.
@@ -54,9 +56,15 @@ func (p *resourceProvider) GetNodeMetrics(ctx context.Context, nodes ...string) 
 		glog.Errorf("failed to fetch tenant info for nodes %q...: %v", nodes[0], err)
 	}
 
+	kc, ok := p.kubeClient.(tenantmeta.TenantWise).ShallowCopyWithTenant(tenantInfo).(kubernetes.Interface)
+	if !ok {
+		glog.Error("type assertion failed")
+		return nil, nil, nil
+	}
 	nodeIPs := make([]string, len(nodes))
 	for i, nodeName := range nodes {
-		node, err := p.kubeClient.CoreV1().Nodes().Get(nodeName, meta_v1.GetOptions{})
+		// node, err := p.kubeClient.CoreV1().Nodes().Get(nodeName, meta_v1.GetOptions{})
+		node, err := kc.CoreV1().Nodes().Get(nodeName, meta_v1.GetOptions{})
 		if err != nil {
 			glog.Errorf("failed to get node object %q: %v. continue", nodeName, err)
 			continue
@@ -134,9 +142,16 @@ func (p *resourceProvider) GetContainerMetrics(ctx context.Context, pods ...apit
 		glog.Errorf("failed to fetch tenant info for pods \"%s/%s\"...: %v", pods[0].Namespace, pods[0].Name, err)
 	}
 
+	kc, ok := p.kubeClient.(tenantmeta.TenantWise).ShallowCopyWithTenant(tenantInfo).(kubernetes.Interface)
+	if !ok {
+		glog.Error("type assertion failed")
+		return nil, nil, nil
+	}
+
 	podContainerInfos := make([][]containerInfo, len(pods))
 	for i, podNameInfo := range pods {
-		pod, err := p.kubeClient.CoreV1().Pods(podNameInfo.Namespace).Get(podNameInfo.Name, meta_v1.GetOptions{})
+		// pod, err := p.kubeClient.CoreV1().Pods(podNameInfo.Namespace).Get(podNameInfo.Name, meta_v1.GetOptions{})
+		pod, err := kc.CoreV1().Pods(podNameInfo.Namespace).Get(podNameInfo.Name, meta_v1.GetOptions{})
 		if err != nil {
 			glog.Errorf("failed to get pod object \"%s/%s\": %v. continue", podNameInfo.Namespace, podNameInfo.Name, err)
 			continue

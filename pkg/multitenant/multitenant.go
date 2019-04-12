@@ -29,6 +29,31 @@ type TenantInfo struct {
 	ClusterName   string
 }
 
+// // Tenant is an interface for accessing antcloud-aks multitenancy meta information
+// type TenantInfo interface {
+// 	// GetTenantID returns tenant id
+// 	GetTenantID() string
+// 	// GetWorkspaceID returns workspace id
+// 	GetWorkspaceID() string
+// 	// GetClusterID returns cluster id
+// 	GetClusterID() string
+// }
+
+// GetTenantID implements multitenancy.TenantInfo interface.
+func (t *TenantInfo) GetTenantID() string {
+	return t.TenantName
+}
+
+// GetWorkspaceID implements multitenancy.TenantInfo interface.
+func (t *TenantInfo) GetWorkspaceID() string {
+	return t.WorkspaceName
+}
+
+// GetClusterID implements multitenancy.TenantInfo interface.
+func (t *TenantInfo) GetClusterID() string {
+	return t.ClusterName
+}
+
 // IsMultiTenant return true if TenantName and WorkspaceName are not empty.
 func (t *TenantInfo) IsMultiTenant() bool {
 	if t.TenantName != "" && t.WorkspaceName != "" {
@@ -48,15 +73,15 @@ func (t *TenantInfo) ToMap() map[string]string {
 }
 
 // GetTenantInfoFromContext extracts tenant info from the context.
-func GetTenantInfoFromContext(ctx context.Context) (TenantInfo, error) {
+func GetTenantInfoFromContext(ctx context.Context) (*TenantInfo, error) {
 	tenantInfo := TenantInfo{}
 	userInfo, ok := request.UserFrom(ctx)
 	if !ok {
-		return tenantInfo, fmt.Errorf("unable to get user info from the context")
+		return nil, fmt.Errorf("unable to get user info from the context")
 	}
 	extra := userInfo.GetExtra()
 	if extra == nil {
-		return tenantInfo, fmt.Errorf("failed to extract tenant info from userInfo: nil extra")
+		return nil, fmt.Errorf("failed to extract tenant info from userInfo: nil extra")
 	}
 	if value, ok := extra[UserExtraTenantName]; ok && len(value) == 1 {
 		tenantInfo.TenantName = value[0]
@@ -68,7 +93,7 @@ func GetTenantInfoFromContext(ctx context.Context) (TenantInfo, error) {
 		tenantInfo.ClusterName = value[0]
 	}
 	if !tenantInfo.IsMultiTenant() {
-		return tenantInfo, fmt.Errorf("insufficient multi-tenant info, tenantInfo: %+v", tenantInfo)
+		return nil, fmt.Errorf("insufficient multi-tenant info, tenantInfo: %+v", tenantInfo)
 	}
-	return tenantInfo, nil
+	return &tenantInfo, nil
 }

@@ -94,3 +94,8 @@ docker-build-builder:
 .PHONY: docker-build-builder-push
 docker-build-builder-push:
 	bash ./scripts/docker-build.sh builder push
+
+.PHONY: custom-dep
+custom-dep:
+	mkdir -p vendor/gitlab.alipay-inc.com/antcloud-aks
+	cp -r ~/go/src/gitlab.alipay-inc.com/antcloud-aks/aks-k8s-api vendor/gitlab.alipay-inc.com/antcloud-aks/

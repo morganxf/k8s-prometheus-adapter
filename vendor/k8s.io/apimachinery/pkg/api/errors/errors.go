@@ -524,19 +524,6 @@ func IsTooManyRequests(err error) bool {
 	return false
 }
 
-// IsRequestEntityTooLargeError determines if err is an error which indicates
-// the request entity is too large.
-func IsRequestEntityTooLargeError(err error) bool {
-	if ReasonForError(err) == metav1.StatusReasonRequestEntityTooLarge {
-		return true
-	}
-	switch t := err.(type) {
-	case APIStatus:
-		return t.Status().Code == http.StatusRequestEntityTooLarge
-	}
-	return false
-}
-
 // IsUnexpectedServerError returns true if the server response was not in the expected API format,
 // and may be the result of another HTTP actor.
 func IsUnexpectedServerError(err error) bool {
