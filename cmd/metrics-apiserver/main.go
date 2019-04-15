@@ -14,10 +14,13 @@ import (
 	basecmd "github.com/kubernetes-incubator/custom-metrics-apiserver/pkg/cmd"
 	resmetrics "github.com/kubernetes-incubator/metrics-server/pkg/apiserver/generic"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/apiserver/pkg/util/logs"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"gitlab.alipay-inc.com/antcloud-aks/aks-k8s-api/pkg/multitenancy"
 )
 
 type Adapter struct {
@@ -124,6 +127,18 @@ func (cmd *Adapter) makeKubeClient() (kubernetes.Interface, error) {
 		return nil, fmt.Errorf("unable tp construct lister client: %v", err)
 	}
 	return kubeClient, nil
+}
+
+func init() {
+	err := feature.DefaultFeatureGate.Add(map[feature.Feature]feature.FeatureSpec{
+		multitenancy.FeatureName: {
+			Default:    true,
+			PreRelease: feature.Alpha,
+		},
+	})
+	if err != nil {
+		panic(fmt.Sprintf("failed to set DefaultFeatureGate: %v", err))
+	}
 }
 
 func main() {

@@ -35,6 +35,9 @@ import (
 	v1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/metrics/pkg/apis/metrics"
 	_ "k8s.io/metrics/pkg/apis/metrics/install"
+
+	"github.com/directxman12/k8s-prometheus-adapter/pkg/multitenant"
+	tenantmeta "gitlab.alipay-inc.com/antcloud-aks/aks-k8s-api/pkg/multitenancy/meta"
 )
 
 type MetricStorage struct {
@@ -75,10 +78,23 @@ func (m *MetricStorage) NewList() runtime.Object {
 func (m *MetricStorage) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	labelSelector := labels.Everything()
 	if options != nil && options.LabelSelector != nil {
+		glog.Infof("use custom label selector")
 		labelSelector = options.LabelSelector
 	}
+
+	tenantInfo, err := multitenant.GetTenantInfoFromContext(ctx)
+	if err != nil {
+		glog.Errorf("failed to fetch tenant info for pod Lister: %v", err)
+	}
+	podLister, ok := m.podLister.(tenantmeta.TenantWise).ShallowCopyWithTenant(tenantInfo).(v1listers.PodLister)
+	if !ok {
+		errMsg := fmt.Errorf("failed to assert type pod Lister")
+		glog.Error(errMsg)
+		return &metrics.PodMetricsList{}, errMsg
+	}
+
 	namespace := genericapirequest.NamespaceValue(ctx)
-	pods, err := m.podLister.Pods(namespace).List(labelSelector)
+	pods, err := podLister.Pods(namespace).List(labelSelector)
 	if err != nil {
 		errMsg := fmt.Errorf("Error while listing pods for selector %v in namespace %q: %v", labelSelector, namespace, err)
 		glog.Error(errMsg)
@@ -99,7 +115,19 @@ func (m *MetricStorage) List(ctx context.Context, options *metainternalversion.L
 func (m *MetricStorage) Get(ctx context.Context, name string, opts *metav1.GetOptions) (runtime.Object, error) {
 	namespace := genericapirequest.NamespaceValue(ctx)
 
-	pod, err := m.podLister.Pods(namespace).Get(name)
+	tenantInfo, err := multitenant.GetTenantInfoFromContext(ctx)
+	if err != nil {
+		glog.Errorf("failed to fetch tenant info for pod Lister: %v", err)
+	}
+	podLister, ok := m.podLister.(tenantmeta.TenantWise).ShallowCopyWithTenant(tenantInfo).(v1listers.PodLister)
+	if !ok {
+		errMsg := fmt.Errorf("failed to assert type pod Lister")
+		glog.Error(errMsg)
+		return &metrics.PodMetricsList{}, errMsg
+	}
+
+	
+	pod, err := podLister.Pods(namespace).Get(name)
 	if err != nil {
 		errMsg := fmt.Errorf("Error while getting pod %v: %v", name, err)
 		glog.Error(errMsg)

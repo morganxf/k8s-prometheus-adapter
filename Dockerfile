@@ -9,7 +9,7 @@ RUN apt-get update \
 ARG VERSION
 WORKDIR /go/src/github.com/directxman12/k8s-prometheus-adapter
 ADD . .
-RUN CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -tags netgo -ldflags "-X main.version=${VERSION}" -o metrics-apiserver github.com/directxman12/k8s-prometheus-adapter/cmd/metrics-apiserver
+RUN CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -tags=multitenancy -ldflags "-X main.version=${VERSION}" -o metrics-apiserver github.com/directxman12/k8s-prometheus-adapter/cmd/metrics-apiserver
 
 ############################
 # STEP 2 build a small image

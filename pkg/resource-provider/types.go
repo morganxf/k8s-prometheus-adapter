@@ -71,7 +71,7 @@ func (r *nodeResource) buildQueryOpts(metricName string) []*client.APIQueryOptio
 				"mip":                        r.nodeIP,
 				client.KeyTenant:             r.tenantName,
 				client.KeyWorkspace:          r.workspaceName,
-				client.KeyMetricResourceType: "NODE",
+				client.KeyMetricResourceType: "MACHINE",
 			},
 		},
 	}
@@ -104,10 +104,10 @@ func (r *podResource) buildQueryOpts(metricName string) []*client.APIQueryOption
 		opts[i] = &client.APIQueryOptions{
 			MetricName: metricName,
 			Labels: map[string]string{
-				"cid":                        cont.id,
+				"id":                        cont.id,
 				client.KeyTenant:             r.tenantName,
 				client.KeyWorkspace:          r.workspaceName,
-				client.KeyMetricResourceType: "CONTAINER",
+				client.KeyMetricResourceType: "CONTAINER_POD",
 			},
 		}
 	}

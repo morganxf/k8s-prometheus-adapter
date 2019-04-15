@@ -4,6 +4,7 @@ import (
 	"context"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -48,6 +49,7 @@ type resourceProvider struct {
 
 // GetNodeMetrics implements the provider.MetricsProvider interface. It may return nil, nil, nil.
 func (p *resourceProvider) GetNodeMetrics(ctx context.Context, nodes ...string) ([]provider.TimeInfo, []apiv1.ResourceList, error) {
+	glog.Infof("start to get nodes metrics: %v", nodes)
 	if len(nodes) == 0 {
 		return nil, nil, nil
 	}
@@ -92,16 +94,16 @@ func (p *resourceProvider) GetNodeMetrics(ctx context.Context, nodes ...string) 
 	for i, nodeName := range nodes {
 		// skip if any data is missing
 		rm := rawResMetrics[i]
-		if rm == nil {
-			glog.V(1).Infof("missing resource metrics for node %q, skipping", nodeName)
+		if rm == nil || len(rm.cpu) == 0 || len(rm.mem) == 0 {
+			glog.Infof("missing resource metrics for node %q, skipping", nodeName)
 			continue
 		}
 		if len(rm.cpu[0].DataPoints) == 0 {
-			glog.V(1).Infof("missing CPU metric for node %q, skipping", nodeName)
+			glog.Infof("missing CPU metric for node %q, skipping", nodeName)
 			continue
 		}
 		if len(rm.mem[0].DataPoints) == 0 {
-			glog.V(1).Infof("missing memory metric for node %q, skipping", nodeName)
+			glog.Infof("missing memory metric for node %q, skipping", nodeName)
 			continue
 		}
 
@@ -110,8 +112,10 @@ func (p *resourceProvider) GetNodeMetrics(ctx context.Context, nodes ...string) 
 
 		// store the results
 		resMetrics[i] = apiv1.ResourceList{
-			apiv1.ResourceCPU:    *resource.NewMilliQuantity(int64(cpu.Value*1000.0), resource.DecimalSI),
-			apiv1.ResourceMemory: *resource.NewMilliQuantity(int64(mem.Value*1000.0), resource.BinarySI),
+			//apiv1.ResourceCPU:    *resource.NewMilliQuantity(int64(cpu.Value*1000.0), resource.DecimalSI),
+			//apiv1.ResourceMemory: *resource.NewMilliQuantity(int64(mem.Value*1000.0), resource.BinarySI),
+			apiv1.ResourceCPU:    *resource.NewMilliQuantity(int64(cpu.Value*1000.0), resource.DecimalExponent),
+			apiv1.ResourceMemory: *resource.NewMilliQuantity(int64(mem.Value*1000.0), resource.DecimalExponent),
 		}
 
 		// use the earliest timestamp available (in order to be conservative
@@ -129,11 +133,13 @@ func (p *resourceProvider) GetNodeMetrics(ctx context.Context, nodes ...string) 
 		}
 	}
 
+	glog.Infof("resTimes: %+v, resMetrics: %+v", resTimes, resMetrics)
 	return resTimes, resMetrics, nil
 }
 
 // GetContainerMetrics implements the provider.MetricsProvider interface. It may return nil, nil, nil.
 func (p *resourceProvider) GetContainerMetrics(ctx context.Context, pods ...apitypes.NamespacedName) ([]provider.TimeInfo, [][]metrics.ContainerMetrics, error) {
+	glog.Infof("start to get pods metrics: %+v", pods)
 	if len(pods) == 0 {
 		return nil, nil, nil
 	}
@@ -160,11 +166,13 @@ func (p *resourceProvider) GetContainerMetrics(ctx context.Context, pods ...apit
 		for j, containerStatus := range pod.Status.ContainerStatuses {
 			containerInfos[j] = containerInfo{
 				name: containerStatus.Name,
-				id:   containerStatus.ContainerID,
+				id:   strings.TrimLeft(containerStatus.ContainerID, "docker://"),
 			}
 		}
 		podContainerInfos[i] = containerInfos
 	}
+
+	glog.Infof("podContainerInfos: %v", podContainerInfos)
 
 	builders := make([]queryOptsBuilder, len(pods))
 	for i, podNameInfo := range pods {
@@ -182,7 +190,7 @@ func (p *resourceProvider) GetContainerMetrics(ctx context.Context, pods ...apit
 	for i, podNameInfo := range pods {
 		rm := rawResMetrics[i]
 		if rm == nil {
-			glog.V(1).Infof("missing resource metrics for pod \"%s/%s\", skipping", podNameInfo.Namespace, podNameInfo.Name)
+			glog.Infof("missing resource metrics for pod \"%s/%s\", skipping", podNameInfo.Namespace, podNameInfo.Name)
 			continue
 		}
 
@@ -193,11 +201,11 @@ func (p *resourceProvider) GetContainerMetrics(ctx context.Context, pods ...apit
 		for j := 0; j < len(containerInfos); j++ {
 			containerInfo := containerInfos[j]
 			if len(rm.cpu[j].DataPoints) == 0 {
-				glog.V(1).Infof("missing CPU metric for pod container \"%s/%s/%s\", skipping", podNameInfo.Namespace, podNameInfo.Name, containerInfo.name)
+				glog.Infof("missing CPU metric for pod container \"%s/%s/%s\", skipping", podNameInfo.Namespace, podNameInfo.Name, containerInfo.name)
 				continue
 			}
 			if len(rm.mem[j].DataPoints) == 0 {
-				glog.V(1).Infof("missing memroy metric for pod container \"%s/%s/%s\", skipping", podNameInfo.Namespace, podNameInfo.Name, containerInfo.name)
+				glog.Infof("missing memroy metric for pod container \"%s/%s/%s\", skipping", podNameInfo.Namespace, podNameInfo.Name, containerInfo.name)
 				continue
 			}
 			cpu := rm.cpu[j].DataPoints[0]
@@ -206,8 +214,10 @@ func (p *resourceProvider) GetContainerMetrics(ctx context.Context, pods ...apit
 			containerMetrics[j] = metrics.ContainerMetrics{
 				Name: containerInfo.name,
 				Usage: apiv1.ResourceList{
-					apiv1.ResourceCPU:    *resource.NewMilliQuantity(int64(cpu.Value*1000.0), resource.DecimalSI),
-					apiv1.ResourceMemory: *resource.NewMilliQuantity(int64(mem.Value*1000.0), resource.BinarySI),
+					//apiv1.ResourceCPU:    *resource.NewMilliQuantity(int64(cpu.Value*1000.0), resource.DecimalSI),
+					//apiv1.ResourceMemory: *resource.NewMilliQuantity(int64(mem.Value*1000.0), resource.BinarySI),
+					apiv1.ResourceCPU:    *resource.NewMilliQuantity(int64(cpu.Value*1000.0), resource.DecimalExponent),
+					apiv1.ResourceMemory: *resource.NewMilliQuantity(int64(mem.Value*1000.0), resource.DecimalExponent),
 				},
 			}
 
@@ -227,6 +237,7 @@ func (p *resourceProvider) GetContainerMetrics(ctx context.Context, pods ...apit
 		resMetrics[i] = containerMetrics
 	}
 
+	glog.Infof("pods resTimes: %+v, resMetrics: %+v", resTimes, resMetrics)
 	return resTimes, resMetrics, nil
 }
 
@@ -279,7 +290,7 @@ func (p *resourceProvider) queryMemoryMetrics(builders ...queryOptsBuilder) [][]
 }
 
 func (p *resourceProvider) queryResourceMetrics(resQueryOpts ...[]*client.APIQueryOptions) [][]Metric {
-	resMetrics := make([][]Metric, len(resQueryOpts))
+	resMetrics := make([][]Metric, 0, len(resQueryOpts))
 
 	msChan := make(chan []Metric, len(resQueryOpts))
 	var wg sync.WaitGroup
@@ -287,15 +298,15 @@ func (p *resourceProvider) queryResourceMetrics(resQueryOpts ...[]*client.APIQue
 	for _, queryOpts := range resQueryOpts {
 		go func(queryOpts []*client.APIQueryOptions) {
 			defer wg.Done()
-			metrics := p.queryMetrics(queryOpts)
-			msChan <- metrics
+			result := p.queryMetrics(queryOpts)
+			msChan <- result
 		}(queryOpts)
 	}
 	wg.Wait()
 	close(msChan)
 
-	for metrics := range msChan {
-		resMetrics = append(resMetrics, metrics)
+	for result := range msChan {
+		resMetrics = append(resMetrics, result)
 	}
 
 	return resMetrics

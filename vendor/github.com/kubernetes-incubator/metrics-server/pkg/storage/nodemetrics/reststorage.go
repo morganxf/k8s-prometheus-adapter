@@ -33,6 +33,9 @@ import (
 	v1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/metrics/pkg/apis/metrics"
 	_ "k8s.io/metrics/pkg/apis/metrics/install"
+
+	"github.com/directxman12/k8s-prometheus-adapter/pkg/multitenant"
+	tenantmeta "gitlab.alipay-inc.com/antcloud-aks/aks-k8s-api/pkg/multitenancy/meta"
 )
 
 type MetricStorage struct {
@@ -76,7 +79,19 @@ func (m *MetricStorage) List(ctx context.Context, options *metainternalversion.L
 	if options != nil && options.LabelSelector != nil {
 		labelSelector = options.LabelSelector
 	}
-	nodes, err := m.nodeLister.ListWithPredicate(func(node *v1.Node) bool {
+
+	tenantInfo, err := multitenant.GetTenantInfoFromContext(ctx)
+	if err != nil {
+		glog.Errorf("failed to fetch tenant info for nodeLister: %v", err)
+	}
+	nodeLister, ok := m.nodeLister.(tenantmeta.TenantWise).ShallowCopyWithTenant(tenantInfo).(v1listers.NodeLister)
+	if !ok {
+		errMsg := fmt.Errorf("failed to assert type nodeLister")
+		glog.Error(errMsg)
+		return &metrics.NodeMetricsList{}, errMsg
+	}
+
+	nodes, err := nodeLister.ListWithPredicate(func(node *v1.Node) bool {
 		if labelSelector.Empty() {
 			return true
 		}
