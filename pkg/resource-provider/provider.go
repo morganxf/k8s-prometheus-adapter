@@ -63,7 +63,7 @@ func (p *resourceProvider) GetNodeMetrics(ctx context.Context, nodes ...string) 
 		glog.Error("type assertion failed")
 		return nil, nil, nil
 	}
-	nodeIPs := make([]string, len(nodes))
+	nodeInfos := make([]nodeInfo, len(nodes))
 	for i, nodeName := range nodes {
 		// node, err := p.kubeClient.CoreV1().Nodes().Get(nodeName, meta_v1.GetOptions{})
 		node, err := kc.CoreV1().Nodes().Get(nodeName, meta_v1.GetOptions{})
@@ -76,12 +76,16 @@ func (p *resourceProvider) GetNodeMetrics(ctx context.Context, nodes ...string) 
 			glog.Errorf("failed to get node address %q: %v. continue", nodeName, err)
 			continue
 		}
-		nodeIPs[i] = nodeIP
+		nodeInfos[i] = nodeInfo{
+			ip: nodeIP,
+			capacity: node.Status.Capacity,
+		}
 	}
+	glog.Infof("nodeInfos: %+v", nodeInfos)
 
 	builders := make([]queryOptsBuilder, len(nodes))
 	for i, nodeName := range nodes {
-		nr := newNodeResource(nodeName, nodeIPs[i], tenantInfo.TenantName, tenantInfo.WorkspaceName, tenantInfo.ClusterName)
+		nr := newNodeResource(nodeName, nodeInfos[i].ip, tenantInfo.TenantName, tenantInfo.WorkspaceName, tenantInfo.ClusterName)
 		builders[i] = nr
 	}
 
@@ -162,16 +166,20 @@ func (p *resourceProvider) GetContainerMetrics(ctx context.Context, pods ...apit
 			glog.Errorf("failed to get pod object \"%s/%s\": %v. continue", podNameInfo.Namespace, podNameInfo.Name, err)
 			continue
 		}
-		containerInfos := make([]containerInfo, len(pod.Status.ContainerStatuses))
-		for j, containerStatus := range pod.Status.ContainerStatuses {
+		containerLen := len(pod.Status.ContainerStatuses)
+		containerInfos := make([]containerInfo, containerLen)
+		for j := 0; j < containerLen; j++ {
+			c := &pod.Spec.Containers[j]
+			cs := &pod.Status.ContainerStatuses[j]
 			containerInfos[j] = containerInfo{
-				name: containerStatus.Name,
-				id:   strings.TrimLeft(containerStatus.ContainerID, "docker://"),
+				name: c.Name,
+				id:   strings.TrimLeft(cs.ContainerID, "docker://"),
+				resources: c.Resources,
 			}
 		}
+
 		podContainerInfos[i] = containerInfos
 	}
-
 	glog.Infof("podContainerInfos: %v", podContainerInfos)
 
 	builders := make([]queryOptsBuilder, len(pods))
@@ -259,8 +267,8 @@ func (p *resourceProvider) queryBoth(builders ...queryOptsBuilder) []*resourceMe
 	resMetrics := make([]*resourceMetric, len(builders))
 	for i := 0; i < len(resMetrics); i++ {
 		resMetrics[i] = &resourceMetric{
-			cpu: resCPUMetrics[0],
-			mem: resMemoryMetrics[0],
+			cpu: resCPUMetrics[i],
+			mem: resMemoryMetrics[i],
 		}
 	}
 
@@ -293,16 +301,21 @@ func (p *resourceProvider) queryResourceMetrics(resQueryOpts ...[]*client.APIQue
 	resMetrics := make([][]Metric, 0, len(resQueryOpts))
 
 	msChan := make(chan []Metric, len(resQueryOpts))
-	var wg sync.WaitGroup
-	wg.Add(len(resQueryOpts))
+	//var wg sync.WaitGroup
+	//wg.Add(len(resQueryOpts))
+	//for _, queryOpts := range resQueryOpts {
+	//	go func(queryOpts []*client.APIQueryOptions) {
+	//		defer wg.Done()
+	//		result := p.queryMetrics(queryOpts)
+	//		msChan <- result
+	//	}(queryOpts)
+	//}
+	//wg.Wait()
+
 	for _, queryOpts := range resQueryOpts {
-		go func(queryOpts []*client.APIQueryOptions) {
-			defer wg.Done()
-			result := p.queryMetrics(queryOpts)
-			msChan <- result
-		}(queryOpts)
+		result := p.queryMetrics(queryOpts)
+		msChan <- result
 	}
-	wg.Wait()
 	close(msChan)
 
 	for result := range msChan {

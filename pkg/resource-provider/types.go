@@ -2,7 +2,10 @@ package provider
 
 import (
 	client "github.com/directxman12/k8s-prometheus-adapter/pkg/custom-client"
+	corev1 "k8s.io/api/core/v1"
 )
+
+var resourceNames = []corev1.ResourceName{corev1.ResourceCPU, corev1.ResourceMemory}
 
 type DataPoint struct {
 	Timestamp int64
@@ -37,6 +40,33 @@ type clusterInfo struct {
 type containerInfo struct {
 	name string
 	id   string
+	resources corev1.ResourceRequirements
+}
+
+func (c containerInfo) GetCapacity() corev1.ResourceList {
+	capacity := make(corev1.ResourceList, 2)
+	if c.resources.Limits != nil {
+		for key, value := range c.resources.Limits {
+			capacity[key] = value
+		}
+	}
+	if c.resources.Requests != nil {
+		for _, key := range resourceNames {
+			if _, found := capacity[key]; !found {
+				capacity[key] = c.resources.Requests[key]
+			}
+		}
+	}
+	return capacity
+}
+
+type nodeInfo struct {
+	ip string
+	capacity corev1.ResourceList
+}
+
+func (n nodeInfo) GetCapacity() corev1.ResourceList {
+	return n.capacity
 }
 
 type nodeResource struct {
