@@ -7,3 +7,4 @@ cmd/metrics-apiserver/testdata/*.pem
 cmd/metrics-apiserver/testdata/kube_config.yml
 nodes.yml
 pods.yml
+apiserver.local.config

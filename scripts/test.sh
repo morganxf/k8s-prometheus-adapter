@@ -102,5 +102,5 @@ curl -k --cert ~/kubernetes/aks/cert.pem --key ~/kubernetes/aks/key.pem \
 -H "X-Forwarded-For: ::1" \
 -H "Accept-Encoding: gzip" \
 -H "Accept: application/vnd.kubernetes.protobuf, */*"  \
-https://localhost:6443/apis/metrics.k8s.io/v1beta1/namespaces/default/pods
+https://localhost:443/apis/metrics.k8s.io/v1beta1/namespaces/default/pods
 

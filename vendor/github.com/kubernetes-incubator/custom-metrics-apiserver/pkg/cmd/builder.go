@@ -23,7 +23,6 @@ import (
 
 	"github.com/spf13/pflag"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apiserver/pkg/authorization/authorizerfactory"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/informers"
@@ -238,8 +237,6 @@ func (b *AdapterBase) Server() (*apiserver.CustomMetricsAdapterServer, error) {
 		if err != nil {
 			return nil, err
 		}
-
-		config.GenericConfig.Authorization.Authorizer = authorizerfactory.NewAlwaysAllowAuthorizer()
 
 		if b.Name == "" {
 			b.Name = "custom-metrics-adapter"
