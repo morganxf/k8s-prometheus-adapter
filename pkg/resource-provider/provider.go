@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -114,12 +115,30 @@ func (p *resourceProvider) GetNodeMetrics(ctx context.Context, nodes ...string) 
 		cpu := rm.cpu[0].DataPoints[0]
 		mem := rm.mem[0].DataPoints[0]
 
+		if nodeInfos[i].capacity.Cpu() == nil || nodeInfos[i].capacity.Memory() == nil {
+			glog.Errorf("cpu or memory capacity is nil")
+			continue
+		}
+		//cpuCapacityStr := nodeInfos[i].capacity.Cpu().String()
+		cpuQuantity, err := PercentToUsage(nodeInfos[i].capacity.Cpu().String(), cpu.Value/100.0)
+		if err != nil {
+			glog.Errorf("can't get cpuQuantity: %v", err)
+			continue
+		}
+		memQuantity, err := PercentToUsage(nodeInfos[i].capacity.Memory().String(), mem.Value/100.0)
+		if err != nil {
+			glog.Errorf("can't get memQuantity: %v", err)
+			continue
+		}
+
 		// store the results
 		resMetrics[i] = apiv1.ResourceList{
 			//apiv1.ResourceCPU:    *resource.NewMilliQuantity(int64(cpu.Value*1000.0), resource.DecimalSI),
 			//apiv1.ResourceMemory: *resource.NewMilliQuantity(int64(mem.Value*1000.0), resource.BinarySI),
-			apiv1.ResourceCPU:    *resource.NewMilliQuantity(int64(cpu.Value*1000.0), resource.DecimalExponent),
-			apiv1.ResourceMemory: *resource.NewMilliQuantity(int64(mem.Value*1000.0), resource.DecimalExponent),
+			//apiv1.ResourceCPU:    *resource.NewMilliQuantity(int64(cpu.Value*1000.0), resource.DecimalExponent),
+			//apiv1.ResourceMemory: *resource.NewMilliQuantity(int64(mem.Value*1000.0), resource.DecimalExponent),
+			apiv1.ResourceCPU:    cpuQuantity,
+			apiv1.ResourceMemory: memQuantity,
 		}
 
 		// use the earliest timestamp available (in order to be conservative
@@ -219,13 +238,32 @@ func (p *resourceProvider) GetContainerMetrics(ctx context.Context, pods ...apit
 			cpu := rm.cpu[j].DataPoints[0]
 			mem := rm.mem[j].DataPoints[0]
 
+			capacity := containerInfo.GetCapacity()
+			if capacity.Cpu() == nil || capacity.Memory() == nil {
+				glog.Errorf("cpu or memory capacity is nil")
+				continue
+			}
+			//cpuCapacityStr := nodeInfos[i].capacity.Cpu().String()
+			cpuQuantity, err := PercentToUsage(capacity.Cpu().String(), cpu.Value/100.0)
+			if err != nil {
+				glog.Errorf("can't get cpuQuantity: %v", err)
+				continue
+			}
+			memQuantity, err := PercentToUsage(capacity.Memory().String(), mem.Value/100.0)
+			if err != nil {
+				glog.Errorf("can't get memQuantity: %v", err)
+				continue
+			}
+
 			containerMetrics[j] = metrics.ContainerMetrics{
 				Name: containerInfo.name,
 				Usage: apiv1.ResourceList{
 					//apiv1.ResourceCPU:    *resource.NewMilliQuantity(int64(cpu.Value*1000.0), resource.DecimalSI),
 					//apiv1.ResourceMemory: *resource.NewMilliQuantity(int64(mem.Value*1000.0), resource.BinarySI),
-					apiv1.ResourceCPU:    *resource.NewMilliQuantity(int64(cpu.Value*1000.0), resource.DecimalExponent),
-					apiv1.ResourceMemory: *resource.NewMilliQuantity(int64(mem.Value*1000.0), resource.DecimalExponent),
+					//apiv1.ResourceCPU:    *resource.NewMilliQuantity(int64(cpu.Value*1000.0), resource.DecimalExponent),
+					//apiv1.ResourceMemory: *resource.NewMilliQuantity(int64(mem.Value*1000.0), resource.DecimalExponent),
+					apiv1.ResourceCPU:    cpuQuantity,
+					apiv1.ResourceMemory: memQuantity,
 				},
 			}
 
@@ -406,4 +444,18 @@ func newResourceQuery(metricName string) resourceQuery {
 type queryOpts struct {
 	metricName   string
 	resourceType string
+}
+
+func PercentToUsage(quantityStr string, percent float64) (resource.Quantity, error) {
+	if len(quantityStr) == 0 {
+		return resource.Quantity{}, fmt.Errorf("PercentToUsage failed: quantityStr is empty")
+	}
+	digit, letter := SplitDigitLetter(quantityStr)
+	value, err := strconv.ParseFloat(digit, 32)
+	if err != nil {
+		return resource.Quantity{}, fmt.Errorf("PercentToUsage failed: %v", err)
+	}
+	value = value * percent
+	qStr := strconv.FormatFloat(value, 'f', -1, 32) + letter
+	return resource.ParseQuantity(qStr)
 }

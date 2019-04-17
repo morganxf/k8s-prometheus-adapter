@@ -117,7 +117,7 @@ type queryClient struct {
 func (c *queryClient) QueryRange(ctx context.Context, queryOpts APIQueryOptions) (QueryResult, error) {
 	//return QueryResult{
 	//	Metrics: Metric{
-	//		DataPoints: map[string]float64{"1555060992": float64(1.5)},
+	//		DataPoints: map[string]float64{"1555060992": float64(60)},
 	//	},
 	//}, nil
 	var queryRes QueryResult
