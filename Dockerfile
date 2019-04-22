@@ -31,9 +31,9 @@ ENTRYPOINT ["/etc/metrics-apiserver/entrypoint.sh"]
 CMD [ "/etc/metrics-apiserver/metrics-apiserver", \
       "--lister-kubeconfig=/etc/metrics-apiserver/conf/kubeconfig.yml", \
       "--authentication-kubeconfig=/etc/metrics-apiserver/conf/kubeconfig.yml", \
-      "--client-ca-file=/etc/metrics-apiserver/conf/ca.crt", \
-      "--requestheader-client-ca-file=/etc/metrics-apiserver/conf/ca.crt", \
       "--authorization-kubeconfig=/etc/metrics-apiserver/conf/kubeconfig.yml", \
       "--kube-config=/etc/metrics-apiserver/conf/kubeconfig.yml", \
-      "--secure-port=6443", \
+      "--client-ca-file=/etc/metrics-apiserver/conf/ca.pem", \
+      "--requestheader-client-ca-file=/etc/metrics-apiserver/conf/ca.pem", \
+      "--secure-port=443", \
       "--authentication-skip-lookup=true" ]
