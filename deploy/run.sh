@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# shanghai-finance-pre
 ./metrics-apiserver \
 --lister-kubeconfig=/etc/metrics-apiserver/conf/kubeconfig.yml \
 --authentication-kubeconfig=/etc/metrics-apiserver/conf/kubeconfig.yml \
@@ -7,15 +8,15 @@
 --kube-config=/etc/metrics-apiserver/conf/kubeconfig.yml \
 --client-ca-file=/etc/metrics-apiserver/conf/ca.pem \
 --requestheader-client-ca-file=/etc/metrics-apiserver/conf/ca.pem \
---secure-port=443 \
+--secure-port=6443 \
 --authentication-skip-lookup=true \
---monitor-server-url=http://localhost
+--monitor-server-url=http://10.252.4.12:8341
 
 
-curl -k --cert /etc/metrics-apiserver/conf/cert.pem --key /etc/metrics-apiserver/conf/key.pem \
--H "X-Remote-Extra-Antcloud-Aks-Cluster-Id: helmtest" \
--H "X-Remote-Extra-Antcloud-Aks-Tenant-Id: MEUGIVCN" \
--H "X-Remote-Extra-Antcloud-Aks-Workspace-Id: HelmTest" \
+curl -k --cert /root/metrics-apiserver/conf/cert.pem --key /root/metrics-apiserver/conf/key.pem \
+-H "X-Remote-Extra-Antcloud-Aks-Cluster-Id: test" \
+-H "X-Remote-Extra-Antcloud-Aks-Tenant-Id: XOVKOVCN" \
+-H "X-Remote-Extra-Antcloud-Aks-Workspace-Id: ShanghaiTest2" \
 -H "X-Remote-Group: system:masters" \
 -H "X-Remote-User: system:apiserver" \
 -H "User-Agent: hyperkube/v1.12.0 (darwin/amd64) kubernetes/31dda1c" \

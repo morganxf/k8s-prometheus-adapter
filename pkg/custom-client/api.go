@@ -136,7 +136,8 @@ func (c *queryClient) QueryRange(ctx context.Context, queryOpts APIQueryOptions)
 	}
 
 	if len(res.Data.Data.Metrics) == 0 {
-		return queryRes, fmt.Errorf("not found. MetricName: %s, MetricLables: %+v", queryOpts.MetricName, queryOpts.Labels)
+		return queryRes, fmt.Errorf("not found. MetricName: %s, MetricLables: %+v, Body: %s",
+			queryOpts.MetricName, queryOpts.Labels, string(b))
 	}
 	queryRes.Metrics = res.Data.Data.Metrics[0]
 	return queryRes, nil

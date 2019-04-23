@@ -38,8 +38,8 @@ type clusterInfo struct {
 }
 
 type containerInfo struct {
-	name string
-	id   string
+	name      string
+	id        string
 	resources corev1.ResourceRequirements
 }
 
@@ -61,7 +61,7 @@ func (c containerInfo) GetCapacity() corev1.ResourceList {
 }
 
 type nodeInfo struct {
-	ip string
+	ip       string
 	capacity corev1.ResourceList
 }
 
@@ -98,10 +98,11 @@ func (r *nodeResource) buildQueryOpts(metricName string) []*client.APIQueryOptio
 		{
 			MetricName: metricName,
 			Labels: map[string]string{
-				"mip":                        r.nodeIP,
+				"id": r.resourceInfo.name,
+				//"ip":                         r.nodeIP,
 				client.KeyTenant:             r.tenantName,
 				client.KeyWorkspace:          r.workspaceName,
-				client.KeyMetricResourceType: "MACHINE",
+				client.KeyMetricResourceType: "ECS",
 			},
 		},
 	}
@@ -134,7 +135,7 @@ func (r *podResource) buildQueryOpts(metricName string) []*client.APIQueryOption
 		opts[i] = &client.APIQueryOptions{
 			MetricName: metricName,
 			Labels: map[string]string{
-				"id":                        cont.id,
+				"id":                         cont.id,
 				client.KeyTenant:             r.tenantName,
 				client.KeyWorkspace:          r.workspaceName,
 				client.KeyMetricResourceType: "CONTAINER_POD",
