@@ -174,8 +174,16 @@ func main() {
 		glog.Fatalf("unable to install resource metrics API: %v", err)
 	}
 
+	http.HandleFunc("/healthz", healthHandler)
+	go func() {
+		glog.Fatal(http.ListenAndServe(":9004", nil))
+	}()
 	// run the server
 	if err := cmd.Run(wait.NeverStop); err != nil {
 		glog.Fatalf("unable to run metrics APIServer: %v", err)
 	}
+}
+
+func healthHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "ok\n")
 }

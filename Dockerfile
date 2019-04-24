@@ -35,5 +35,5 @@ CMD [ "/etc/metrics-apiserver/metrics-apiserver", \
       "--kube-config=/etc/metrics-apiserver/conf/kubeconfig.yml", \
       "--client-ca-file=/etc/metrics-apiserver/conf/ca.pem", \
       "--requestheader-client-ca-file=/etc/metrics-apiserver/conf/ca.pem", \
-      "--secure-port=6443", \
+      "--secure-port=443", \
       "--authentication-skip-lookup=true" ]
