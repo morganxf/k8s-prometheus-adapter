@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"net"
 
+	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
+
 	"github.com/kubernetes-incubator/custom-metrics-apiserver/pkg/apiserver"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
@@ -62,10 +64,16 @@ func (o CustomMetricsAdapterServerOptions) Config() (*apiserver.Config, error) {
 	if err := o.SecureServing.ApplyTo(&serverConfig.SecureServing, &serverConfig.LoopbackClientConfig); err != nil {
 		return nil, err
 	}
-
 	if err := o.Authentication.ApplyTo(&serverConfig.Authentication, serverConfig.SecureServing, serverConfig.OpenAPIConfig); err != nil {
 		return nil, err
 	}
+	headerRequestAuthn, _ := headerrequest.New(
+		[]string{"X-Remote-User"},
+		[]string{"X-Remote-Group"},
+		[]string{"X-Remote-Extra-"},
+	)
+
+	serverConfig.Authentication.Authenticator = headerRequestAuthn
 	if err := o.Authorization.ApplyTo(&serverConfig.Authorization); err != nil {
 		return nil, err
 	}
